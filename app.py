@@ -5,21 +5,20 @@ import requests
 # === SIDEBAR ===
 with st.sidebar:
     st.header("Customize Your Bot")
-    
+   
     business_name = st.text_input("Business Name", "Your Awesome Business")
-    logo_url = st.text_input("Logo URL (150x150 px)", "with st.sidebar:
-    st.header("Customize Your Bot")
+    logo_url = st.text_input("Logo URL (150x150 px)", "")
     booking_link = st.text_input("Booking Link (Calendly, etc.)", "https://calendly.com/your-link")
-    
+   
     primary_color = st.color_picker("Primary Color", "#1e90ff")
     bg_color = st.color_picker("Background Color", "#f8f9fa")
     text_color = st.color_picker("Text Color", "#212529")
-    
+   
     font_size = st.slider("Font Size (px)", 14, 24, 16)
     font_family = st.selectbox("Font Family", ["Arial", "Helvetica", "Georgia", "Courier New", "Verdana"])
-    
+   
     model = st.selectbox("AI Model", ["grok-4-fast (cheapest)", "gpt-4o-mini (ChatGPT)", "gemini-1.5-flash (Google)"])
-    
+   
     st.subheader("Services")
     services = []
     for i in range(10):
@@ -29,20 +28,27 @@ with st.sidebar:
             desc = st.text_area(f"Description##{i}", "Short description", key=f"desc{i}")
             if name and price:
                 services.append(f"- {name}: {price} – {desc}")
-    
+   
     services_text = "\n".join(services) if services else "- Contact us for pricing"
-    
+   
     welcome_msg = st.text_area("Welcome Message", "Hello! How can I help you today?")
 
-    # Demo buttons
+    # === DEMO BUTTON ===
     if st.button("Load Dental Demo"):
-        st.session_state.update({
-            "business_name": "Smile Clinic Stockholm",
-            "logo_url": "",
-            "booking_link": "https://calendly.com/smileclinic",
-            "services_text": "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
-        })
+        st.session_state.business_name = "Smile Clinic Stockholm"
+        st.session_state.logo_url = ""
+        st.session_state.booking_link = "https://calendly.com/smileclinic"
+        services_text = "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
         st.success("Dental demo loaded!")
+        # Uppdatera prompt manuellt (ingen emoji-bugg)
+        new_prompt = f"""You are a professional AI assistant for Smile Clinic Stockholm.
+Services:
+{services_text}
+Always ask for name + phone to book.
+Booking link: https://calendly.com/smileclinic
+Offer 10% off first visit.
+Perfect English only."""
+        st.session_state.messages = [{"role": "system", "content": new_prompt}]
 
 # === SYSTEM PROMPT ===
 SYSTEM_PROMPT = f"""You are a professional AI assistant for {business_name}.
@@ -52,6 +58,7 @@ Always ask for name + phone to book.
 Booking link: {booking_link}
 Offer 10% off first visit.
 Perfect English only."""
+
 
 # === API SETUP ===
 if "grok" in model.lower():
