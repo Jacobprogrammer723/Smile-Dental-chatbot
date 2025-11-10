@@ -37,7 +37,7 @@ with st.sidebar:
     if st.button("Load Dental Demo"):
         st.session_state.update({
             "business_name": "Smile Clinic Stockholm",
-            "logo_url": "https://i.imgur.com/EXAMPLE.png",
+            "logo_url": "",
             "booking_link": "https://calendly.com/smileclinic",
             "services_text": "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
         })
