@@ -2,21 +2,17 @@
 import streamlit as st
 import requests
 
-# === SIDEBAR ===
+# === SIDEBAR CUSTOMIZER ===
 with st.sidebar:
     st.header("Customize Your Bot")
-    
     clinic_name = st.text_input("Business Name", "Your Awesome Business")
     logo_url = st.text_input("Logo URL (150x150 px)", "https://via.placeholder.com/150")
     calendar_link = st.text_input("Booking Link", "https://calendly.com/your-link")
-    
     primary_color = st.color_picker("Primary Color", "#1e90ff")
     bg_color = st.color_picker("Background Color", "#f8f9fa")
     text_color = st.color_picker("Text Color", "#212529")
-    
     font_size = st.slider("Font Size (px)", 14, 24, 16)
     font_family = st.selectbox("Font Family", ["Arial", "Helvetica", "Georgia", "Courier New", "Verdana"])
-    
     model = st.selectbox("AI Model", ["grok-4-fast (cheapest)", "gpt-4o-mini (ChatGPT)", "gemini-1.5-flash (Google)"])
     
     st.subheader("Services")
@@ -28,9 +24,7 @@ with st.sidebar:
             desc = st.text_area(f"Description##{i}", "Short description", key=f"desc{i}")
             if name and price:
                 services.append(f"- {name}: {price} – {desc}")
-    
     services_text = "\n".join(services) if services else "- Contact us for pricing"
-    
     welcome_msg = st.text_area("Welcome Message", "Hello! How can I help you today?")
 
 # === SYSTEM PROMPT ===
@@ -64,7 +58,7 @@ if not API_KEY:
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-# === DYNAMIC CSS ===
+# === CSS ===
 css = f"""
 <style>
     .main {{background: {bg_color}; padding: 2rem 1rem; font-family: {font_family}; font-size: {font_size}px; color: {text_color};}}
@@ -74,45 +68,16 @@ css = f"""
     .assistant-message {{background: #e9ecef; color: {text_color};}}
     .stChatInput > div > div > input {{border-radius: 25px !important; padding: 0.8rem 1.5rem !important; border: 2px solid {primary_color} !important;}}
     h1 {{color: {primary_color} !important;}}
+    /* TA BORT FIL-IKONEN I ALLA TEXTFÄLT */
+    .stTextInput > div > div > div > div > svg,
+    .stTextArea > div > div > div > div > svg,
+    [data-baseweb="input"] svg,
+    svg[data-icon="paperclip"], 
+    svg[data-icon="upload"] {{
+        display: none !important;
+    }}
 </style>
 """
 st.markdown(css, unsafe_allow_html=True)
 
-# === HEADER ===
-with st.container():
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        if logo_url:
-            st.image(logo_url, width=120)
-        st.markdown(f"<h1>🤖 {clinic_name}</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#666; font-size:1.1rem;'>24/7 AI Assistant – Book, Ask, Smile</p>", unsafe_allow_html=True)
-
-# === CHAT ===
-for msg in st.session_state.messages[1:]:
-    if msg["role"] == "user":
-        st.markdown(f"<div class='chat-message user-message'>{msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='chat-message assistant-message'>{msg['content']}</div>", unsafe_allow_html=True)
-
-if prompt := st.chat_input(welcome_msg):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.markdown(f"<div class='chat-message user-message'>{prompt}</div>", unsafe_allow_html=True)
-    
-    with st.spinner("Thinking..."):
-        try:
-            if "gemini" in model.lower():
-                payload = {"contents": [{"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["content"]}]} for m in st.session_state.messages]}
-                response = requests.post(f"{url}?key={API_KEY}", json=payload).json()
-                answer = response["candidates"][0]["content"]["parts"][0]["text"]
-            else:
-                payload = {"model": payload_model, "messages": st.session_state.messages}
-                response = requests.post(url, headers={"Authorization": f"Bearer {API_KEY}"}, json=payload).json()
-                answer = response["choices"][0]["message"]["content"]
-            
-            st.markdown(f"<div class='chat-message assistant-message'>{answer}</div>", unsafe_allow_html=True)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
-
-# === FOOTER ===
 st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by {model.split()[0]} • Custom AI Assistant • $197</p>", unsafe_allow_html=True)
