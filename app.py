@@ -1,4 +1,4 @@
-# chatbot-pro-template.py – chat bot pro
+# chatbot-pro-template.py – Chatbot all models
 import streamlit as st
 import requests
 
@@ -7,21 +7,18 @@ st.set_page_config(page_title="Your AI Assistant", page_icon="🤖", layout="cen
 
 st.markdown("""
 <style>
-    /* Remove fullscreen button */
-    button[title="View fullscreen"] {display: none !important;}
-    /* Remove debug balloon */
+    /* Debug-ballong (0, 20, etc.) */
     section[data-testid="stDecoration"] {display: none !important;}
-    /* Remove file icons */
+    /* Fullscreen-knapp */
+    button[title="View fullscreen"] {display: none !important;}
+    /* Fil-ikoner */
     .stTextInput > div > div > div > div > svg,
     .stTextArea > div > div > div > div > svg,
     [data-baseweb="input"] svg,
     svg[data-icon="paperclip"], svg[data-icon="upload"] {display: none !important;}
-    /* Mobile: hide sidebar */
-    @media (max-width: 768px) {
-        [data-testid="collapsedControl"] {display: none !important;}
-    }
 </style>
 """, unsafe_allow_html=True)
+
 
 # === SIDEBAR ===
 with st.sidebar:
