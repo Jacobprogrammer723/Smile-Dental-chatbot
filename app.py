@@ -7,7 +7,8 @@ with st.sidebar:
     st.header("Customize Your Bot")
     
     business_name = st.text_input("Business Name", "Your Awesome Business")
-    logo_url = st.text_input("Logo URL (150x150 px)", "")
+    logo_url = st.text_input("Logo URL (150x150 px)", "with st.sidebar:
+    st.header("Customize Your Bot")
     booking_link = st.text_input("Booking Link (Calendly, etc.)", "https://calendly.com/your-link")
     
     primary_color = st.color_picker("Primary Color", "#1e90ff")
@@ -36,7 +37,7 @@ with st.sidebar:
     # Demo buttons
     if st.button("Load Dental Demo"):
         st.session_state.update({
-            "business_name"🤖 : "Smile Clinic Stockholm",
+            "business_name": "Smile Clinic Stockholm",
             "logo_url": "",
             "booking_link": "https://calendly.com/smileclinic",
             "services_text": "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
@@ -113,7 +114,7 @@ with st.container():
     with col2:
         if logo_url:
             st.image(logo_url, width=120)
-        st.markdown(f"<h1> {business_name}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1>🤖 {business_name}</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#666; font-size:1.1rem;'>24/7 AI Assistant – Book, Ask, Smile</p>", unsafe_allow_html=True)
 
 # === CHAT ===
