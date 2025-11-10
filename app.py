@@ -7,7 +7,7 @@ with st.sidebar:
     st.header("Customize Your Bot")
     
     business_name = st.text_input("Business Name", "Your Awesome Business")
-    logo_url = st.text_input("Logo URL (150x150 px)", "https://via.placeholder.com/150")
+    logo_url = st.text_input("Logo URL (150x150 px)", "")
     booking_link = st.text_input("Booking Link (Calendly, etc.)", "https://calendly.com/your-link")
     
     primary_color = st.color_picker("Primary Color", "#1e90ff")
