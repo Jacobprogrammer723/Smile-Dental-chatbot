@@ -1,7 +1,6 @@
 # chatbot-pro-template.py – ULTIMATE CHATBOT
 import streamlit as st
 import requests
-
 # === SIDEBAR ===
 with st.sidebar:
     st.header("Customize Your Bot")
@@ -32,25 +31,24 @@ with st.sidebar:
     services_text = "\n".join(services) if services else "- Contact us for pricing"
    
     welcome_msg = st.text_area("Welcome Message", "Hello! How can I help you today?")
-
     # === DEMO BUTTON ===
     if st.button("Load Dental Demo"):
         st.session_state.business_name = "Smile Clinic Stockholm"
         st.session_state.logo_url = ""
         st.session_state.booking_link = "https://calendly.com/smileclinic"
-        services_text = "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
+        st.session_state.services_text = "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
         st.success("Dental demo loaded!")
         # Uppdatera prompt manuellt (ingen emoji-bugg)
         new_prompt = f"""You are a professional AI assistant for Smile Clinic Stockholm.
 Services:
-{services_text}
+{st.session_state.services_text}
 Always ask for name + phone to book.
 Booking link: https://calendly.com/smileclinic
 Offer 10% off first visit.
 Perfect English only."""
         st.session_state.messages = [{"role": "system", "content": new_prompt}]
-
 # === SYSTEM PROMPT ===
+services_text = st.session_state.get("services_text", services_text)
 SYSTEM_PROMPT = f"""You are a professional AI assistant for {business_name}.
 Services:
 {services_text}
@@ -58,8 +56,6 @@ Always ask for name + phone to book.
 Booking link: {booking_link}
 Offer 10% off first visit.
 Perfect English only."""
-
-
 # === API SETUP ===
 if "grok" in model.lower():
     API_KEY = st.secrets.get("GROK_KEY")
@@ -73,15 +69,12 @@ else:
     API_KEY = st.secrets.get("GEMINI_KEY")
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     payload_model = None
-
 if not API_KEY:
     st.error(f"Add your {model.split()[0]} API key in Streamlit secrets!")
     st.stop()
-
 # === INIT CHAT ===
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
 # === CSS ===
 css = f"""
 <style>
@@ -96,14 +89,13 @@ css = f"""
     .stTextInput > div > div > div > div > svg,
     .stTextArea > div > div > div > div > svg,
     [data-baseweb="input"] svg,
-    svg[data-icon="paperclip"], 
+    svg[data-icon="paperclip"],
     svg[data-icon="upload"] {{
         display: none !important;
     }}
 </style>
 """
 st.markdown(css, unsafe_allow_html=True)
-
 # Auto-scroll script
 st.markdown("""
 <script>
@@ -114,7 +106,6 @@ st.markdown("""
     }
 </script>
 """, unsafe_allow_html=True)
-
 # === HEADER ===
 with st.container():
     col1, col2, col3 = st.columns([1, 3, 1])
@@ -123,14 +114,12 @@ with st.container():
             st.image(logo_url, width=120)
         st.markdown(f"<h1>🤖 {business_name}</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#666; font-size:1.1rem;'>24/7 AI Assistant – Book, Ask, Smile</p>", unsafe_allow_html=True)
-
 # === CHAT ===
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
         st.markdown(f"<div class='chat-message user-message'>{msg['content']}</div>", unsafe_allow_html=True)
     else:
         st.markdown(f"<div class='chat-message assistant-message'>{msg['content']}</div>", unsafe_allow_html=True)
-
 if prompt := st.chat_input(welcome_msg):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.markdown(f"<div class='chat-message user-message'>{prompt}</div>", unsafe_allow_html=True)
@@ -150,12 +139,10 @@ if prompt := st.chat_input(welcome_msg):
             st.session_state.messages.append({"role": "assistant", "content": answer})
         except Exception as e:
             st.error(f"Error: {str(e)}")
-
 # === LEAD EXPORT BUTTON ===
 if st.button("Export Leads (copy to email)"):
     leads = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages if m['role'] == 'user'])
     st.code(leads)
     st.info("Copy → paste into email. Pro version auto-sends leads!")
-
 # === FOOTER ===
 st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by {model.split()[0]} • Custom AI Assistant</p>", unsafe_allow_html=True)
