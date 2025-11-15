@@ -1,169 +1,199 @@
-# chatbot-pro-template.py – ULTIMATE CHATBOT (GLOBAL 2025)
 import streamlit as st
 import requests
 
-# === SIDEBAR ===
-with st.sidebar:
-    st.header("Customize Your Bot")
-  
-    business_name = st.text_input("Business Name", "Your Awesome Business")
-    logo_url = st.text_input("Logo URL (150x150 px)", "")
-    booking_link = st.text_input("Booking Link (Calendly, etc.)", "https://calendly.com/your-link")
-  
-    primary_color = st.color_picker("Primary Color", "#1e90ff")
-    bg_color = st.color_picker("Background Color", "#f8f9fa")
-    text_color = st.color_picker("Text Color", "#212529")
-  
-    font_size = st.slider("Font Size (px)", 14, 24, 16)
-    font_family = st.selectbox("Font Family", ["Arial", "Helvetica", "Georgia", "Courier New", "Verdana"])
-  
-    model = st.selectbox("AI Model", ["grok-4-fast (cheapest)", "gpt-4o-mini (ChatGPT)", "gemini-1.5-flash (Google)"])
-  
-    st.subheader("Services")
-    services = []
-    for i in range(10):
-        with st.expander(f"Service {i+1}" if i > 0 else "Add Service"):
-            name = st.text_input(f"Name##{i}", f"Service {i+1}", key=f"name{i}")
-            price = st.text_input(f"Price##{i}", "$99", key=f"price{i}")
-            desc = st.text_area(f"Description##{i}", "Short description", key=f"desc{i}")
-            if name and price:
-                services.append(f"- {name}: {price} – {desc}")
-  
-    services_text = "\n".join(services) if services else "- Contact us for pricing"
-  
-    welcome_msg = st.text_area("Welcome Message", "Hello! How can I help you today?")
+# ============================================================
+#       🟩 1. KUNDINSTÄLLNINGAR (ÄNDRA HÄR INFÖR VARJE KUND)
+# ============================================================
 
-    # === DEMO BUTTON ===
-    if st.button("Load Dental Demo"):
-        st.session_state.business_name = "Smile Clinic Stockholm"
-        st.session_state.logo_url = ""
-        st.session_state.booking_link = "https://calendly.com/smileclinic"
-        st.session_state.services_text = "- Check-up: $76\n- Whitening: $285\n- Implants: $1425"
-        st.success("Dental demo loaded!")
-        new_prompt = f"""You are a professional AI assistant for Smile Clinic Stockholm.
-Services:
-{st.session_state.services_text}
-Always ask for name + phone to book.
-Booking link: https://calendly.com/smileclinic
-Offer 10% off first visit.
-Perfect English only."""
-        st.session_state.messages = [{"role": "system", "content": new_prompt}]
+# 👉 Här editerar du alla kundspecifika värden.
+# 👉 Dessa behöver inte hämtas via sidomenyn (enklare att sälja).
 
-# === SYSTEM PROMPT ===
-services_text = st.session_state.get("services_text", services_text)
-SYSTEM_PROMPT = f"""You are a professional AI assistant for {business_name}.
+CUSTOMER = {
+    "business_name": "Smile Clinic Stockholm",       # ÄNDRA HÄR FÖR KUNDEN
+    "logo_url": "https://via.placeholder.com/150",   # ÄNDRA HÄR FÖR KUNDEN
+    "booking_link": "https://calendly.com/example",  # ÄNDRA HÄR FÖR KUNDEN
+
+    # Lista över tjänster – enkel att redigera (namn, pris, beskrivning)
+    "services": [
+        "- Check-up: $76 – Full dental check-up",
+        "- Whitening: $285 – Professional whitening treatment",
+        "- Implants: $1425 – Titanium dental implant"
+    ],
+
+    # UI-design – ändra för kundens färger / brand
+    "primary_color": "#1e90ff",
+    "background_color": "#f8f9fa",
+    "text_color": "#212529",
+    "font_family": "Arial",
+    "font_size": 16,
+
+    # Modell som används – OpenAI/Grok/Gemini
+    "ai_model": "gpt-4o-mini",  # "grok-4-fast" eller "gemini-1.5-flash"
+}
+
+# ============================================================
+#             🟦 2. SYSTEMPROMPT (AUTO GENERERAD)
+# ============================================================
+
+def build_system_prompt(customer):
+    services_text = "\n".join(customer["services"])
+
+    return f"""
+You are a professional AI assistant for {customer['business_name']}.
+
 Services:
 {services_text}
-Always ask for name + phone to book.
-Booking link: {booking_link}
+
+Always ask for name + phone number to book.
+Booking link: {customer['booking_link']}
 Offer 10% off first visit.
-Perfect English only.
+Answer in perfect English.
 End EVERY answer with:
 "Get your own AI chatbot for $299 → https://payhip.com/b/BF2hV"
 """
 
-# === API SETUP ===
-if "grok" in model.lower():
-    API_KEY = st.secrets.get("GROK_KEY")
-    url = "https://api.x.ai/v1/chat/completions"
-    payload_model = "grok-4-fast"
-elif "chatgpt" in model.lower():
-    API_KEY = st.secrets.get("OPENAI_KEY")
-    url = "https://api.openai.com/v1/chat/completions"
-    payload_model = "gpt-4o-mini"
-else:
-    API_KEY = st.secrets.get("GEMINI_KEY")
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-    payload_model = None
+SYSTEM_PROMPT = build_system_prompt(CUSTOMER)
 
-# === DEMO MODE (NO KEY) ===
-if not API_KEY:
-    st.warning("Demo mode – using mock answers")
-    DEMO_MODE = True
-else:
-    DEMO_MODE = False
+# ============================================================
+#          🟨 3. INITIERA SESSION (CHATTMINNE)
+# ============================================================
 
-# === INIT CHAT ===
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-# === CSS ===
-css = f"""
+# Begränsa historik (billigare API-kostnad)
+def trim_history(history, limit=12):
+    return [history[0]] + history[-limit:]
+
+
+# ============================================================
+#            🟧 4. VÄLJ MODEL + API NYCKEL
+# ============================================================
+
+model = CUSTOMER["ai_model"]
+API_KEY = None
+url = None
+payload_model = None
+
+if model == "grok-4-fast":
+    API_KEY = st.secrets.get("GROK_KEY")
+    url = "https://api.x.ai/v1/chat/completions"
+    payload_model = "grok-4-fast"
+
+elif model == "gpt-4o-mini":
+    API_KEY = st.secrets.get("OPENAI_KEY")
+    url = "https://api.openai.com/v1/chat/completions"
+    payload_model = "gpt-4o-mini"
+
+elif model == "gemini-1.5-flash":
+    API_KEY = st.secrets.get("GEMINI_KEY")
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+DEMO_MODE = not API_KEY
+
+
+# ============================================================
+#                 🟫 5. CSS DESIGN (FÖR KUND)
+# ============================================================
+
+st.markdown(f"""
 <style>
-    .main {{background: {bg_color}; padding: 2rem 1rem; font-family: {font_family}; font-size: {font_size}px; color: {text_color};}}
-    .header {{text-align: center; padding: 2rem 0; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 2rem;}}
-    .chat-message {{padding: 1.2rem; border-radius: 15px; margin: 0.5rem 0; max-width: 80%;}}
-    .user-message {{background: {primary_color}; color: white; margin-left: auto;}}
-    .assistant-message {{background: #e9ecef; color: {text_color};}}
-    .stChatInput > div > div > input {{border-radius: 25px !important; padding: 0.8rem 1.5rem !important; border: 2px solid {primary_color} !important;}}
-    .stButton > button {{border-radius: 25px;}}
-    h1 {{color: {primary_color} !important;}}
-    /* NO FILE ICON */
-    .stTextInput > div > div > div > div > svg,
-    .stTextArea > div > div > div > div > svg,
-    [data-baseweb="input"] svg,
-    svg[data-icon="paperclip"],
-    svg[data-icon="upload"] {{
-        display: none !important;
+    .main {{
+        background: {CUSTOMER['background_color']};
+        font-family: {CUSTOMER['font_family']};
+        font-size: {CUSTOMER['font_size']}px;
+        color: {CUSTOMER['text_color']};
+    }}
+    .chat-message {{
+        padding: 1rem;
+        border-radius: 12px;
+        margin: 0.5rem 0;
+        max-width: 80%;
+    }}
+    .user-message {{
+        background: {CUSTOMER['primary_color']};
+        color: white;
+        margin-left: auto;
+    }}
+    .assistant-message {{
+        background: #eeeeee;
+        color: {CUSTOMER['text_color']};
     }}
 </style>
-"""
-st.markdown(css, unsafe_allow_html=True)
-
-# Auto-scroll + mobile fix
-st.markdown("""
-<script>
-    const chatContainer = parent.document.querySelector('.stChatMessage');
-    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-    if (window.innerWidth < 768) {
-        document.querySelector('[data-testid="stSidebar"]').style.display = 'none';
-    }
-</script>
 """, unsafe_allow_html=True)
 
-# === HEADER ===
-with st.container():
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        if logo_url:
-            st.image(logo_url, width=120)
-        st.markdown(f"<h1>🤖 {business_name}</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#666; font-size:1.1rem;'>24/7 AI Assistant – Book, Ask, Smile</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-weight:bold; color:#e74c3c; text-align:center;'>Get yours for $299 → <a href='https://payhip.com/b/BF2hV' target='_blank'>Buy Now</a></p>", unsafe_allow_html=True)
 
-# === BUY BUTTON ===
-if st.button("🚀 Get Your Own Chatbot – $299", type="primary"):
-    st.markdown("[Buy Now →](https://payhip.com/b/BF2hV)")
+# ============================================================
+#                         🟪 6. HEADER
+# ============================================================
 
-# === CHAT ===
+st.write("")
+if CUSTOMER["logo_url"]:
+    st.image(CUSTOMER["logo_url"], width=110)
+
+st.markdown(
+    f"<h1 style='text-align:center;'>🤖 {CUSTOMER['business_name']}</h1>",
+    unsafe_allow_html=True
+)
+st.markdown("<p style='text-align:center;color:#666;'>24/7 AI Assistant</p>", unsafe_allow_html=True)
+
+
+# ============================================================
+#                     🟥 7. VISA CHATT
+# ============================================================
+
 for msg in st.session_state.messages[1:]:
-    if msg["role"] == "user":
-        st.markdown(f"<div class='chat-message user-message'>{msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='chat-message assistant-message'>{msg['content']}</div>", unsafe_allow_html=True)
+    css = "user-message" if msg["role"] == "user" else "assistant-message"
+    st.markdown(f"<div class='chat-message {css}'>{msg['content']}</div>", unsafe_allow_html=True)
 
-if prompt := st.chat_input(welcome_msg, key="chat"):
+
+# ============================================================
+#                    🟩 8. CHATTINPUT
+# ============================================================
+
+prompt = st.chat_input(f"Hello! How can I help you?")
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.markdown(f"<div class='chat-message user-message'>{prompt}</div>", unsafe_allow_html=True)
-   
+
     with st.spinner("Thinking..."):
         try:
+            history = trim_history(st.session_state.messages)
+
             if DEMO_MODE:
-                answer = f"Thanks for asking! Get the full version for $299 → https://payhip.com/b/BF2hV"
-            elif "gemini" in model.lower():
-                payload = {"contents": [{"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["content"]}]} for m in st.session_state.messages]}
+                answer = "Demo mode — add API keys. Get your own bot for $299 → https://payhip.com/b/BF2hV"
+
+            elif "gemini" in model:
+                payload = {
+                    "contents": [
+                        {
+                            "role": "user" if m["role"] == "user" else "model",
+                            "parts": [{"text": m["content"]}]
+                        }
+                        for m in history if m["role"] != "system"
+                    ],
+                    "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]}
+                }
                 response = requests.post(f"{url}?key={API_KEY}", json=payload).json()
                 answer = response["candidates"][0]["content"]["parts"][0]["text"]
+
             else:
-                payload = {"model": payload_model, "messages": st.session_state.messages}
+                payload = {"model": payload_model, "messages": history}
                 response = requests.post(url, headers={"Authorization": f"Bearer {API_KEY}"}, json=payload).json()
                 answer = response["choices"][0]["message"]["content"]
-           
-            st.markdown(f"<div class='chat-message assistant-message'>{answer}</div>", unsafe_allow_html=True)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-        except Exception as e:
-            st.error("AI is sleeping 😴 Try again in 10 sec.")
-            st.code(f"Error: {str(e)}")
 
-# === FOOTER ===
-st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by <a href='https://x.ai' target='_blank'>{model.split()[0]}</a> • <a href='https://payhip.com/b/BF2hV'>Get Yours – $299</a></p>", unsafe_allow_html=True)
+        except Exception as e:
+            answer = f"Error: {str(e)}"
+
+    st.session_state.messages.append({"role": "assistant", "content": answer})
+    st.rerun()
+
+
+# ============================================================
+#                       🟦 9. FOOTER
+# ============================================================
+
+st.markdown(
+    "<p style='text-align:center;color:#888;margin-top:2rem;'>Get your own bot → https://payhip.com/b/BF2hV</p>",
+    unsafe_allow_html=True
+)
