@@ -166,4 +166,4 @@ if prompt := st.chat_input(welcome_msg, key="chat"):
             st.code(f"Error: {str(e)}")
 
 # === FOOTER ===
-st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by <a href='https://x.ai' target='_blank'>{model.split()[0]}</a> • <a href='https://payhip.com/b/chatbot299'>Get Yours – $299</a></p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by <a href='https://x.ai' target='_blank'>{model.split()[0]}</a> • <a href='https://payhip.com/b/BF2hV'>Get Yours – $299</a></p>", unsafe_allow_html=True)
