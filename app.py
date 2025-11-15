@@ -59,7 +59,7 @@ Booking link: {booking_link}
 Offer 10% off first visit.
 Perfect English only.
 End EVERY answer with:
-"Get your own AI chatbot for $299 → https://payhip.com/b/chatbot299"
+"Get your own AI chatbot for $299 → https://payhip.com/b/BF2hV"
 """
 
 # === API SETUP ===
@@ -129,11 +129,11 @@ with st.container():
             st.image(logo_url, width=120)
         st.markdown(f"<h1>🤖 {business_name}</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#666; font-size:1.1rem;'>24/7 AI Assistant – Book, Ask, Smile</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-weight:bold; color:#e74c3c; text-align:center;'>Get yours for $299 → <a href='https://payhip.com/b/chatbot299' target='_blank'>Buy Now</a></p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-weight:bold; color:#e74c3c; text-align:center;'>Get yours for $299 → <a href='https://payhip.com/b/BF2hV' target='_blank'>Buy Now</a></p>", unsafe_allow_html=True)
 
 # === BUY BUTTON ===
 if st.button("🚀 Get Your Own Chatbot – $299", type="primary"):
-    st.markdown("[Buy Now →](https://payhip.com/b/chatbot299)")
+    st.markdown("[Buy Now →](https://payhip.com/b/BF2hV)")
 
 # === CHAT ===
 for msg in st.session_state.messages[1:]:
@@ -149,7 +149,7 @@ if prompt := st.chat_input(welcome_msg, key="chat"):
     with st.spinner("Thinking..."):
         try:
             if DEMO_MODE:
-                answer = f"Thanks for asking! Get the full version for $299 → https://payhip.com/b/chatbot299"
+                answer = f"Thanks for asking! Get the full version for $299 → https://payhip.com/b/BF2hV"
             elif "gemini" in model.lower():
                 payload = {"contents": [{"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["content"]}]} for m in st.session_state.messages]}
                 response = requests.post(f"{url}?key={API_KEY}", json=payload).json()
