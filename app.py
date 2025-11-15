@@ -165,14 +165,5 @@ if prompt := st.chat_input(welcome_msg, key="chat"):
             st.error("AI is sleeping 😴 Try again in 10 sec.")
             st.code(f"Error: {str(e)}")
 
-# === LEAD EXPORT ===
-if st.button("📧 Export Leads to Email"):
-    leads = []
-    for m in st.session_state.messages:
-        if m["role"] == "user":
-            leads.append(m["content"])
-    email_body = "\n---\n".join(leads)
-    st.markdown(f"[📧 Send to yourself](mailto:your@email.com?subject=New Leads&body={email_body})")
-
 # === FOOTER ===
 st.markdown(f"<p style='text-align:center; color:#888; margin-top:3rem;'>Powered by <a href='https://x.ai' target='_blank'>{model.split()[0]}</a> • <a href='https://payhip.com/b/chatbot299'>Get Yours – $299</a></p>", unsafe_allow_html=True)
